@@ -5,8 +5,10 @@ from django.core.mail import send_mail
 from django.conf import settings
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from django.views.generic import View
+from celery_tasks.tasks import send_register_active_email
 from user.models import User
 import re
+import time
 
 # Create your views here.
 
@@ -59,12 +61,7 @@ class RegisterView(View):
         print('http://127.0.0.1:8000/user/active/%s' % token)
 
         # 发送邮件
-        subject = '天天生鲜'
-        message = ''
-        sender = settings.EMAIL_FROM
-        reciver = [email]
-        msg = '<h1>%s,天天生鲜欢迎您！</h1><span>请点击以下链接进行用户激活：</span><a href="http://127.0.0.1:8000/user/active/%s">http://127.0.0.1:8000/user/active/%s</a>' % (username, token, token)
-        send_mail(subject, message, sender, reciver, html_message=msg)
+        send_register_active_email.delay(email, username, token)
 
         # 返回应答
         return redirect(reverse('goods:index'))
